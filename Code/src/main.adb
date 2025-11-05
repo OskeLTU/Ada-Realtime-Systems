@@ -39,38 +39,23 @@ use MicroBit;
 with Microbit;
 with MicroBit.MotorDriver; use MicroBit.MotorDriver; --using the procedures defined here
 with DFR0548;  -- using the types defined here
+with Sensors; use Sensors;
 
 
 
 
 procedure Main is
 
-   wrong_way : exception;
+Base_speed : constant Float := 4095.0;
+   KP         : constant Float := 500.0;
 
-   package sensor1 is new Ultrasonic(MB_P16, MB_P15);
-   package sensor2 is new Ultrasonic(MB_P14, MB_P13);
-
-   function Read_right_sensor return Distance_cm is
-   Distance_sensor_1 : Distance_cm;
-
-   begin
-      Distance_sensor_1 := sensor1.Read;
-      return Distance_sensor_1;
-   end Read_right_sensor;
-
-   function Read_left_sensor return Distance_cm is
+begin
+   Sensors.sensor_control_setup;
 
 
-   Distance_sensor_2 : Distance_cm;
-   begin
-      Distance_sensor_2 := sensor2.Read;
-      return Distance_sensor_2;
-   end Read_left_sensor;
+    -- Proportional gain
 
-   Base_speed : constant Float := 4096.0;
-   KP         : constant Float := 500.0;  -- Proportional gain
 
-   begin
          loop
       declare
          -- This block now ONLY handles sensor reading and initial calculation
@@ -78,14 +63,17 @@ procedure Main is
          Current_distance_left  : Distance_cm;
          Distance_difference    : Float;
       begin
-         Current_distance_right := Read_right_sensor;
-         Current_distance_left  := Read_left_sensor;
+         Sensors.Trig_right;
+         delay 0.03;
+         Sensors.Trig_left;
+         delay 0.03;
+         Current_distance_right := Sensors.Right_Distance;
+         delay 0.03;
+         Current_distance_left  := Sensors.Left_Distance;
+         delay 0.03;
          Distance_difference    := Float(Current_distance_left) - Float(Current_distance_right);
 
-         -- If we successfully get here, the sensor data is good.
-         -- Now we can proceed to the motor calculations in their own safe block.
          declare
-            -- This block ONLY handles motor calculations
             Correction  : constant Float := KP * Distance_difference;
             Left_speed  : Float := Base_speed + Correction;
             Right_speed : Float := Base_speed - Correction;
@@ -109,11 +97,11 @@ procedure Main is
                Final_Right_Speed : constant Integer := Integer(Right_speed);
             begin
                MotorDriver.Drive
-                 (Forward,
+               (Forward,
                   (HAL.UInt12(Final_Right_Speed),
-                   HAL.UInt12(Final_Right_Speed),
-                   HAL.UInt12(Final_Left_Speed),
-                   HAL.UInt12(Final_Left_Speed)));
+                  HAL.UInt12(Final_Right_Speed),
+                  HAL.UInt12(Final_Left_Speed),
+                  HAL.UInt12(Final_Left_Speed)));
             end;
          exception
             -- This handler ONLY catches errors during motor calculations
