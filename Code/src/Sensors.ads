@@ -1,4 +1,5 @@
-with Microbit.Types; use Microbit.Types;
+with Microbit.Types; use MicroBit.Types;
+with Ada.Real_Time; use Ada.Real_Time;
 
 package Sensors is
 

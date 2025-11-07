@@ -35,8 +35,7 @@ with Microbit.IOsForTasking;  use MicroBit.IOsForTasking;
 with Microbit.Ultrasonic;
 with Microbit.Console; use MicroBit.Console;
 with Microbit.Types; use MicroBit.Types;
-use MicroBit;
-with Microbit;
+with Microbit;use MicroBit;
 with MicroBit.MotorDriver; use MicroBit.MotorDriver; --using the procedures defined here
 with DFR0548;  -- using the types defined here
 with Sensors; use Sensors;
@@ -63,6 +62,7 @@ begin
          Current_distance_left  : Distance_cm;
          Distance_difference    : Float;
       begin
+
          Sensors.Trig_right;
          delay 0.03;
          Sensors.Trig_left;
