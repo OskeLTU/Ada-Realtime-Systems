@@ -14,7 +14,7 @@ package body Sensor_Task is
    task body Sensor_Controller is
       Period : constant Time_Span := Config.Sensor_Period; --sykeluss perioden 120ms.
       Next_Release : Time := Clock; --Starter på nåværende tid.
-      sensor_reading_echo : Time := Clock;
+
 
       Distance_Front_1 : Distance_cm;
       Distance_Front_2  : Distance_cm;
@@ -26,14 +26,12 @@ package body Sensor_Task is
          Put_Line("Sensor Task: Started");
       end if;
 
-      sensor_reading_echo := sensor_reading_echo + Milliseconds (30);
-
 
       loop
          delay until Next_Release;
          -- Les begge sensorene
          Distance_Front_1 := Sensor1.Read;
-         delay until sensor_reading_echo;
+         delay until Clock + Milliseconds(30);
          Distance_Front_2  := Sensor2.Read;
 
          -- Lagre i shared buffer

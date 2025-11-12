@@ -10,7 +10,7 @@ package Config is
 
    -- Vi setter periode til 120ms for å ha 2ms margin
    Sensor_Period : constant Time_Span := Milliseconds(150); -- 120 before
-   Logic_Period  : constant Time_Span := Milliseconds(120); -- 120 before
+   Logic_Period  : constant Time_Span := Milliseconds(150); -- 120 before
 
    -- Høyere verdi = høyere prioritet
    Priority_Sensor : constant System.Priority := System.Priority'Last - 1;
