@@ -16,119 +16,8 @@ package body Logic_Task is
    Turn_180_Duration : constant Time_Span := Milliseconds(1400);
    Backup_Duration   : constant Time_Span := Milliseconds(1000);
    Short_Pause       : constant Time_Span := Milliseconds(200);
+   Very_short_pause  : constant Time_span := Milliseconds(100);
 
-   --  task body Logic_Controller is
-   --     Period : constant Time_Span := Config.Logic_Period;
-   --     Next_Release : Time := Clock;
-
-   --     Distance_Right : Distance_cm;
-   --     Distance_Left  : Distance_cm;
-   --     Distance_Scan  : Distance_cm;
-   --     Dummy : Distance_cm;
-
-   --     Threshold : constant Distance_cm := Distance_cm(15.0);
-
-   --     -- Hjelpevariabel for timing
-   --     Action_Complete_Time : Time;
-
-   --  begin
-   --     Put_Line("=== INTELLIGENT CAR (Full Real_Time) ===");
-
-   --     -- Senter servo
-   --     MotorDriver.Servo(1, 90);
-   --     Action_Complete_Time := Clock + Servo_Settle_Time;
-   --     delay until Action_Complete_Time;
-
-   --     loop
-   --        -- Les sensorer
-   --        Shared_Data.Sensor_Buffer.Get_Distances(Distance_Right, Distance_Left);
-
-   --        if Distance_Right < Threshold or Distance_Left < Threshold then
-   --           Put_Line("OBSTACLE! Right=" & Distance_cm'Image(Distance_Right));
-   --           MotorDriver.Drive(Stop);
-   --           Action_Complete_Time := Clock + Short_Pause;
-   --           delay until Action_Complete_Time;
-
-   --           -- SKANN VENSTRE
-   --           Put_Line("Scanning LEFT...");
-   --           MotorDriver.Servo(1, 180);
-   --           Action_Complete_Time := Clock + Servo_Settle_Time;
-   --           delay until Action_Complete_Time;
-
-   --           Shared_Data.Sensor_Buffer.Get_Distances(Dummy, Distance_Scan);
-   --           Put_Line("  Left: " & Distance_cm'Image(Distance_Scan) & " cm");
-
-   --           if Distance_Scan > Threshold then
-   --              -- VENSTRE ER ÅPEN
-   --              Put_Line("=> Turning LEFT");
-   --              MotorDriver.Servo(1, 90);
-   --              Action_Complete_Time := Clock + Short_Pause;
-   --              delay until Action_Complete_Time;
-
-   --              MotorDriver.Drive(Forward, (0, 0, 4095, 4095)); -- Left turn
-   --              Action_Complete_Time := Clock + Turn_90_Duration;
-   --              delay until Action_Complete_Time;
-
-
-   --           else
-   --              -- VENSTRE BLOKKERT - SKANN HØYRE
-   --              Put_Line("Scanning RIGHT...");
-   --              MotorDriver.Servo(1, 0);
-   --              Action_Complete_Time := Clock + Servo_Settle_Time;
-   --              delay until Action_Complete_Time;
-
-   --              Shared_Data.Sensor_Buffer.Get_Distances(Distance_Scan, Dummy);
-   --              Put_Line("  Right: " & Distance_cm'Image(Distance_Scan) & " cm");
-
-   --              if Distance_Scan > Threshold then
-   --                 -- HØYRE ER ÅPEN
-   --                 Put_Line("=> Turning RIGHT");
-   --                 MotorDriver.Servo(1, 90);
-   --                 Action_Complete_Time := Clock + Short_Pause;
-   --                 delay until Action_Complete_Time;
-
-   --                 MotorDriver.Drive(Forward, (4095, 4095, 0, 0)); --Right turn
-   --                 Action_Complete_Time := Clock + Turn_90_Duration;
-   --                 delay until Action_Complete_Time;
-
-
-   --              else
-   --                 -- BEGGE BLOKKERT - RYGGE!
-   --                 Put_Line("=> BACKING UP (all blocked)");
-   --                 MotorDriver.Servo(1, 90);
-   --                 Action_Complete_Time := Clock + Short_Pause;
-   --                 delay until Action_Complete_Time;
-
-   --                 -- Rygge
-   --                 MotorDriver.Drive(Backward, (4095, 4095, 4095, 4095));
-   --                 Action_Complete_Time := Clock + Backup_Duration;
-   --                 delay until Action_Complete_Time;
-
-   --                 put_line("stopping to turn");
-   --                 MotorDriver.Drive(Stop);
-   --                 Action_Complete_Time := Clock + Short_Pause;
-   --                 delay until Action_Complete_Time;
-
-   --                 -- Snu 180 grader
-   --                 --  Put_Line("=> Turning around");
-   --                 --  MotorDriver.Drive(Rotating_Right, (4095, 4095, 4095, 4095));
-   --                 --  Action_Complete_Time := Clock + Turn_180_Duration;
-   --                 --  delay until Action_Complete_Time;
-
-   --              end if;
-   --           end if;
-
-
-   --        else
-   --           Put_Line("Clear - Moving forward");
-   --           MotorDriver.Drive(Forward, (4095, 4095, 4095, 4095));
-   --        end if;
-
-   --        Next_Release := Next_Release + Period;
-   --        delay until Next_Release;
-
-   --     end loop;
-   --  end Logic_Controller;
 
 task body Logic_Controller is
       Period : constant Time_Span := Config.Logic_Period;
@@ -138,7 +27,8 @@ task body Logic_Controller is
       Distance_Left  : Distance_cm;
 
       -- Threshold is 5cm
-      Threshold : constant Distance_cm := Distance_cm(5.0);
+      Threshold : constant Distance_cm := Distance_cm(8.0);
+      sensor_reading_error : constant Distance_cm := Distance_cm(0.0);
 
       -- Hjelpevariabel for timing
       Action_Complete_Time : Time;
@@ -152,8 +42,8 @@ task body Logic_Controller is
 
          -- 2. Definer tilstander (Define states)
          declare
-            Right_Blocked : constant Boolean := Distance_Right < Threshold;
-            Left_Blocked  : constant Boolean := Distance_Left < Threshold;
+            Right_Blocked : constant Boolean := Distance_Right < Threshold and Distance_Right > sensor_reading_error;
+            Left_Blocked  : constant Boolean := Distance_Left < Threshold and Distance_Left > sensor_reading_error;
          begin
             -- 3. Handle Scenarios
 
@@ -190,6 +80,10 @@ task body Logic_Controller is
                Action_Complete_Time := Clock + Short_Pause;
                delay until Action_Complete_Time;
 
+               MotorDriver.Drive(Backward, (4095, 4095, 4095, 4095));
+               Action_Complete_Time := Clock + Very_short_pause;
+               delay until Action_Complete_Time;
+
                -- Action 2: Pivot Left 90 degrees
                MotorDriver.Drive(Rotating_Left, (4095, 4095, 4095, 4095));
                Action_Complete_Time := Clock + Turn_90_Duration;
@@ -208,8 +102,12 @@ task body Logic_Controller is
                Action_Complete_Time := Clock + Short_Pause;
                delay until Action_Complete_Time;
 
+               MotorDriver.Drive(Backward, (4095, 4095, 4095, 4095));
+               Action_Complete_Time := Clock + Very_short_pause;
+               delay until Action_Complete_Time;
+
                -- Action 2: Pivot Right 90 degrees
-               MotorDriver.Drive(Forward, (4095, 4095, 0, 0));
+               MotorDriver.Drive(Rotating_Right, (4095, 4095, 4095, 4095));
                Action_Complete_Time := Clock + Turn_90_Duration;
                delay until Action_Complete_Time;
 
@@ -230,6 +128,54 @@ task body Logic_Controller is
       end loop;
    end Logic_Controller;
 end Logic_Task;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -- This file is mostly unchanged from the example
 -- I just updated variable names to match the new shared_data buffer.
