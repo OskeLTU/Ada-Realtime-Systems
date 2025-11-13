@@ -7,14 +7,6 @@ with Ada.Real_Time; use Ada.Real_Time;
 procedure Main is
    Next_Time : Time;
 begin
-   Put_Line("=================================");
-   Put_Line("FPS Car Control System Starting");
-   Put_Line("=================================");
-   Put_Line("Sensor Task Priority: High");
-   Put_Line("Logic Task Priority: Normal");
-   Put_Line("Period: 120ms");
-   Put_Line("=================================");
-
 
    Next_Time := Clock;
 
